@@ -367,9 +367,11 @@ function get_equip_stats(equipment_table)
 	
 end
 
-function get_player_acc(stat_table)
+function apply_player_base_stats(stat_table)
 	
-	local stat_table = stat_table
+	if stat_table._player_base_stats_applied then
+		return stat_table
+	end
 	
 	for skill_name, value in pairs(player_base_skills) do
 		--log(stat_table['range'].skill:lower())
@@ -401,6 +403,14 @@ function get_player_acc(stat_table)
 
 	
 	stat_table = get_blue_mage_stats_from_equipped_spells(stat_table)
+	
+	stat_table._player_base_stats_applied = true
+	return stat_table
+end
+
+function get_player_acc(stat_table)
+	
+	local stat_table = apply_player_base_stats(stat_table)
 	
 	local Total_acc = {main = 0, sub = 0, range = 0, ammo = 0, dex = 0, agi = 0}
 	local main_acc_skill = acc_from_skill(stat_table['main'].value)
@@ -439,7 +449,7 @@ end
 
 function get_player_att(stat_table)
 	
-	local stat_table = stat_table
+	local stat_table = apply_player_base_stats(stat_table)
 	
 	local two_handers ={ ["Great Sword"]=0, ["Great Axe"]=0, ["Scythe"]=0, ["Polearm"]=0, ["Great Katana"]=0,["Staff"]=0}
 								
@@ -551,7 +561,7 @@ end
 
 function get_player_evasion(stat_table)
 	
-	local stat_table = stat_table
+	local stat_table = apply_player_base_stats(stat_table)
 	
 	if player_base_skills['evasion'] then 
 		--notice('in')
@@ -568,7 +578,7 @@ end
 
 function get_player_defence(stat_table)
 	
-	local stat_table = stat_table
+	local stat_table = apply_player_base_stats(stat_table)
 	local defence = 0
 	--notice(stat_table['AGI'] .. ' | ' .. stat_table['Evasion skill'] .. ' | ' .. eva_from_skill(stat_table['Evasion skill'] ) .. ' | ' .. get_player_eva_from_job().. ' | ' .. stat_table['Evasion'])
 	if player.main_job_level < 51 then

@@ -146,15 +146,46 @@ function check_buffs()
 			this_buff['Accuracy'] = 20
 			this_buff['Ranged Accuracy'] = 20
 		end
-		if buff.id == 64 then -- last resort
-			if player.main_job:upper() == 'DRK' and player.main_job_level == 99 then
-				this_buff['ja_haste'] = math.ceil(((player.merits.desperate_blows * 2) + 15)/100*1024)
-			elseif player.main_job:upper() == 'DRK' and player.main_job_level < 99 and player.main_job_level > 75 then
-				this_buff['ja_haste'] = math.ceil(((player.merits.desperate_blows * 2) + 5)/100*1024)
-			elseif player.main_job:upper() == 'DRK' and player.main_job_level < 75 then
-				this_buff['ja_haste'] = 52
-			elseif player.sub_job and player.sub_job == 'DRK' then
-				this_buff['ja_haste'] = 52
+		if buff.id == 64 then -- Last Resort
+			local is_main_drk = player.main_job and player.main_job:upper() == 'DRK'
+			local drk_level = 0
+			if is_main_drk then
+				drk_level = player.main_job_level or 0
+			elseif player.sub_job and player.sub_job:upper() == 'DRK' then
+				drk_level = player.sub_job_level or 0
+			end
+			
+			-- Last Resort: +25% Attack / -25% Defense.
+			-- DRK Group 1 Last Resort Effect merits add +/-5/256 per rank.
+			local last_resort_effect_merits = 0
+			if is_main_drk and player.merits then
+				last_resort_effect_merits = player.merits.last_resort_effect or 0
+			end
+			local last_resort_perc = 256 + (last_resort_effect_merits * 20)
+			this_buff['Attack perc'] = last_resort_perc
+			this_buff['Defence perc'] = -last_resort_perc
+			
+			-- DRK Job Point Last Resort Effect adds +2 physical Attack per rank.
+			if is_main_drk and player.job_points and player.job_points.drk then
+				this_buff['Attack'] = (player.job_points.drk.last_resort_effect or 0) * 2
+			end
+			
+			-- Desperate Blows is Job Ability Haste only while using a two-handed weapon:
+			-- 5% at DRK15, 10% at DRK30, 15% at DRK45; main-job merits add 2% per rank.
+			local two_handers = L{'Great Sword', 'Great Axe', 'Scythe', 'Polearm', 'Great Katana', 'Staff'}
+			if player.equipment.main and two_handers:contains(player.equipment.main.skill) then
+				local desperate_blows_haste = 0
+				if drk_level > 44 then
+					desperate_blows_haste = 15
+				elseif drk_level > 29 then
+					desperate_blows_haste = 10
+				elseif drk_level > 14 then
+					desperate_blows_haste = 5
+				end
+				if is_main_drk and player.merits then
+					desperate_blows_haste = desperate_blows_haste + ((player.merits.desperate_blows or 0) * 2)
+				end
+				this_buff['ja_haste'] = math.ceil((desperate_blows_haste / 100) * 1024)
 			end
 		elseif buff.id == 353 then -- Hasso
 			this_buff['ja_haste'] = 103
